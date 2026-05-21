@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Login - Task Manager</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Segoe UI", Arial, sans-serif;
+}
+
+body {
+    display: flex;
+    height: 100vh;
+}
+
+/* LEFT */
+.left {
+    flex: 1;
+    background: linear-gradient(135deg, #4f46e5, #06b6d4);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 60px;
+}
+
+.left h1 {
+    font-size: 42px;
+    margin-bottom: 15px;
+}
+
+.left p {
+    font-size: 16px;
+    opacity: 0.9;
+}
+
+/* RIGHT */
+.right {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #f5f7fb;
+}
+
+.login-box {
+    width: 360px;
+    background: white;
+    padding: 30px;
+    border-radius: 14px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    outline: none;
+}
+
+input:focus {
+    border-color: #4f46e5;
+}
+
+button {
+    width: 100%;
+    margin-top: 20px;
+    padding: 12px;
+    background: #4f46e5;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: #4338ca;
+}
+
+/* TOAST */
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 18px;
+    border-radius: 10px;
+    color: white;
+    font-size: 13px;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: 0.3s;
+    z-index: 9999;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast.success {
+    background: #22c55e;
+}
+
+.toast.error {
+    background: #ef4444;
+}
+</style>
+</head>
+
+<body>
+
+<!-- LEFT -->
+<div class="left">
+    <h1>Task Manager</h1>
+    <p>Manage your team easily and track tasks.</p>
+</div>
+
+<!-- RIGHT -->
+<div class="right">
+
+    <div class="login-box">
+
+        <h2>Login</h2>
+
+        <input
+            type="text"
+            id="username"
+            placeholder="Username"
+        >
+
+        <input
+            type="password"
+            id="password"
+            placeholder="Password"
+        >
+
+        <button onclick="loginUser()">
+            Login
+        </button>
+
+    </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<script>
+
+// ================= TOAST =================
+function showToast(message, type) {
+
+    let toast = document.getElementById("toast");
+
+    toast.innerText = message;
+    toast.className = "toast show " + type;
+
+    setTimeout(() => {
+
+        toast.className = "toast";
+
+    }, 2500);
+}
+
+
+// ================= LOGIN =================
+function loginUser() {
+
+    let username =
+        document.getElementById("username").value;
+
+    let password =
+        document.getElementById("password").value;
+
+    fetch("/api/token/", {
+
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+
+            username: username,
+            password: password
+        })
+    })
+
+    .then(res => res.json())
+
+    .then(data => {
+
+        console.log(data);
+
+        if (data.access) {
+
+            // =========================
+            // SAVE TOKENS
+            // =========================
+            localStorage.setItem(
+                "token",
+                data.access
+            );
+
+            localStorage.setItem(
+                "refresh",
+                data.refresh
+            );
+
+            // =========================
+            // SAVE ROLE
+            // =========================
+            localStorage.setItem(
+                "role",
+                data.role
+            );
+
+            showToast(
+                "Login Successful ✅",
+                "success"
+            );
+
+            setTimeout(() => {
+
+                let role = data.role;
+
+                // =========================
+                // REDIRECT
+                // =========================
+                if (role === "admin") {
+
+                    window.location.href =
+                    "/admin-dashboard/";
+                }
+
+                else {
+
+                    window.location.href =
+                    "/employee-dashboard/";
+                }
+
+            }, 1200);
+
+        }
+
+        else {
+
+            showToast(
+                "Invalid Credentials ❌",
+                "error"
+            );
+        }
+    })
+
+    .catch(() => {
+
+        showToast(
+            "Server Error ⚠️",
+            "error"
+        );
+    });
+}
+
+</script>
+
+</body>
+</html>
